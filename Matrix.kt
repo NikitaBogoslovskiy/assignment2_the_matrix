@@ -38,32 +38,75 @@ interface Matrix<E> {
  * height = высота, width = ширина, e = чем заполнить элементы.
  * Бросить исключение IllegalArgumentException, если height или width <= 0.
  */
-fun <E> createMatrix(height: Int, width: Int, e: E): Matrix<E> = TODO()
+fun <E> createMatrix(height: Int, width: Int, e: E): Matrix<E> {
+    if (height <= 0 || width <= 0) {
+        throw IllegalArgumentException()
+    }
+    return MatrixImpl(height, width, e)
+}
 
 /**
  * Реализация интерфейса "матрица"
  */
 
 @Suppress("EqualsOrHashCode")
-class MatrixImpl<E> : Matrix<E> {
+class MatrixImpl<E>(override val height: Int, override val width: Int, private val defValue: E) : Matrix<E> {
 
-    override val height: Int = TODO()
+    private var matrix: MutableList<MutableList<E>> = MutableList(height) { MutableList(width) { defValue } }
 
-    override val width: Int = TODO()
+    override fun get(row: Int, column: Int): E {
+        if (row < 0 || column < 0 || row >= height || column >= width) {
+            throw IndexOutOfBoundsException()
+        }
+        if (matrix[row][column] == null) {
+            throw NoSuchElementException()
+        }
+        return matrix[row][column]
+    }
 
-    override fun get(row: Int, column: Int): E = TODO()
-
-    override fun get(cell: Cell): E = TODO()
+    override fun get(cell: Cell): E {
+        return get(cell.row, cell.column)
+    }
 
     override fun set(row: Int, column: Int, value: E) {
-        TODO()
+        if (row < 0 || column < 0 || row >= height || column >= width) {
+            throw IndexOutOfBoundsException()
+        }
+        matrix[row][column] = value
     }
 
     override fun set(cell: Cell, value: E) {
-        TODO()
+        set(cell.row, cell.column, value)
     }
 
-    override fun equals(other: Any?) = TODO()
+    override fun equals(other: Any?): Boolean {
+        if (other == null || other !is Matrix<*>) {
+            return false
+        }
 
-    override fun toString(): String = TODO()
+        if (height != other.height || width != other.width) {
+            return false
+        }
+
+        for (i in 0..<height) {
+            for (j in 0..<width) {
+                if (matrix[i][j] != other[i, j]) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    override fun toString(): String {
+        val delim = "  "
+        var str = ""
+        for (i in 0..<height) {
+            for (j in 0..<width) {
+                    str += "${matrix[i][j]}${delim}"
+                }
+            str += "\n"
+        }
+        return str
+    }
 }

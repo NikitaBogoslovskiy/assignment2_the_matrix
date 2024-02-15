@@ -20,20 +20,39 @@ fun <E> transpose(matrix: Matrix<E>): Matrix<E> {
     return result
 }
 
-fun <E> rotate(matrix: Matrix<E>): Matrix<E> = TODO()
+fun <E> rotate(matrix: Matrix<E>): Matrix<E> = transpose(matrix)
 
 /**
  * Сложить две заданные матрицы друг с другом.
  * Складывать можно только матрицы совпадающего размера -- в противном случае бросить IllegalArgumentException.
  * При сложении попарно складываются соответствующие элементы матриц
  */
-operator fun Matrix<Int>.plus(other: Matrix<Int>): Matrix<Int> = TODO(this.toString())
+operator fun Matrix<Int>.plus(other: Matrix<Int>): Matrix<Int> {
+    if (height != other.height || width != other.width) {
+        throw IllegalArgumentException()
+    }
+    val mat = createMatrix(height, width, 0)
+    for (i in 0..<height) {
+        for (j in 0..<width) {
+            mat[i, j] = this[i, j] + other[i, j]
+        }
+    }
+    return mat
+}
 
 /**
  * Инвертировать заданную матрицу.
  * При инвертировании знак каждого элемента матрицы следует заменить на обратный
  */
-operator fun Matrix<Int>.unaryMinus(): Matrix<Int> = TODO(this.toString())
+operator fun Matrix<Int>.unaryMinus(): Matrix<Int> {
+    val mat = createMatrix(height, width, 0)
+    for (i in 0..<height) {
+        for (j in 0..<width) {
+            mat[i, j] = this[i, j] * -1
+        }
+    }
+    return mat
+}
 
 /**
  * Перемножить две заданные матрицы друг с другом.
@@ -41,7 +60,20 @@ operator fun Matrix<Int>.unaryMinus(): Matrix<Int> = TODO(this.toString())
  * В противном случае бросить IllegalArgumentException.
  * Подробно про порядок умножения см. статью Википедии "Умножение матриц".
  */
-operator fun Matrix<Int>.times(other: Matrix<Int>): Matrix<Int> = TODO(this.toString())
+operator fun Matrix<Int>.times(other: Matrix<Int>): Matrix<Int> {
+    if (width != other.height) {
+        throw IllegalArgumentException()
+    }
+    val mat = createMatrix(height, other.width, 0)
+    for (i in 0..<mat.height) {
+        for (j in 0..<mat.width) {
+            for (k in 0..<width) {
+                mat[i, j] += this[i, k] * other[k, j]
+            }
+        }
+    }
+    return mat
+}
 
 
 /**
@@ -57,7 +89,39 @@ operator fun Matrix<Int>.times(other: Matrix<Int>): Matrix<Int> = TODO(this.toSt
  * 0 0 1 0
  * 0 0 0 0
  */
-fun findHoles(matrix: Matrix<Int>): Holes = TODO()
+
+fun findHoles(matrix: Matrix<Int>): Holes {
+    val rows = mutableListOf<Int>()
+    val columns = mutableListOf<Int>()
+
+    for (i in 0..<matrix.height) {
+        var onlyHoles = true
+        for (j in 0..<matrix.width) {
+            if (matrix[i, j] == 1) {
+                onlyHoles = false
+                break
+            }
+        }
+        if (onlyHoles) {
+            rows.add(i)
+        }
+    }
+
+    for (j in 0..<matrix.width) {
+        var onlyHoles = true
+        for (i in 0..<matrix.height) {
+            if (matrix[i, j] == 1) {
+                onlyHoles = false
+                break
+            }
+        }
+        if (onlyHoles) {
+            columns.add(j)
+        }
+    }
+
+    return Holes(rows, columns)
+}
 
 /**
  * Класс для описания местонахождения "дырок" в матрице
@@ -82,4 +146,27 @@ data class Holes(val rows: List<Int>, val columns: List<Int>)
  * Вернуть тройку (Triple) -- (да/нет, требуемый сдвиг по высоте, требуемый сдвиг по ширине).
  * Если наложение невозможно, то первый элемент тройки "нет" и сдвиги могут быть любыми.
  */
-fun canOpenLock(key: Matrix<Int>, lock: Matrix<Int>): Triple<Boolean, Int, Int> = TODO()
+fun canOpenLock(key: Matrix<Int>, lock: Matrix<Int>): Triple<Boolean, Int, Int> {
+    val heightDifference = lock.height - key.height
+    val widthDifference = lock.width - key.width
+    for (heightShift in 0..heightDifference) {
+        for (widthShift in 0..widthDifference) {
+            var areCompatible = true
+            for (i in 0..<key.height) {
+                for (j in 0..<key.width) {
+                    if (key[i, j] == lock[i + heightShift, j + widthShift]) {
+                        areCompatible = false
+                        break
+                    }
+                }
+                if (!areCompatible) {
+                    break
+                }
+            }
+            if (areCompatible) {
+                return Triple(true, heightShift, widthShift)
+            }
+        }
+    }
+    return Triple(false, -1, -1)
+}
